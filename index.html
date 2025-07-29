@@ -1,0 +1,1564 @@
+
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>التوزيع التسلسلي للعدادات - حسب الأحمال التزامنية</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .section {
+            margin-bottom: 30px;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+        }
+
+        .input-section {
+            background: #f8f9ff;
+            border: 2px solid #e3f2fd;
+        }
+
+        .results-section {
+            background: #f1f8e9;
+            border: 2px solid #c8e6c9;
+            display: none;
+        }
+
+        .section h2 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 1.8em;
+            border-bottom: 3px solid #4facfe;
+            padding-bottom: 10px;
+        }
+
+        .form-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr auto;
+            gap: 15px;
+            align-items: end;
+            margin-bottom: 15px;
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            border: 1px solid #e0e0e0;
+        }
+
+        .form-group label {
+            font-weight: bold;
+            color: #555;
+            margin-bottom: 5px;
+            display: block;
+        }
+
+        .form-group input, .form-group select {
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus, .form-group select:focus {
+            outline: none;
+            border-color: #4facfe;
+            box-shadow: 0 0 0 3px rgba(79, 172, 254, 0.1);
+        }
+
+        .form-group input::placeholder {
+            color: #999;
+            font-style: italic;
+        }
+
+        .btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: all 0.3s;
+            text-transform: uppercase;
+        }
+
+        .btn-add {
+            background: #4caf50;
+            color: white;
+        }
+
+        .btn-add:hover {
+            background: #45a049;
+            transform: translateY(-2px);
+        }
+
+        .btn-remove {
+            background: #f44336;
+            color: white;
+            padding: 8px 12px;
+            font-size: 14px;
+        }
+
+        .btn-remove:hover {
+            background: #da190b;
+        }
+
+        .btn-calculate {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 30px;
+            font-size: 18px;
+            margin: 20px auto;
+            display: block;
+            min-width: 200px;
+        }
+
+        .btn-calculate:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        }
+
+        .btn-export {
+            background: #ff9800;
+            color: white;
+            margin-left: 10px;
+        }
+
+        .btn-export:hover {
+            background: #e68900;
+        }
+
+        .meters-list {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .meter-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            margin-bottom: 10px;
+            background: #f5f5f5;
+            border-radius: 6px;
+            border-right: 4px solid #4facfe;
+        }
+
+        .meter-info {
+            flex-grow: 1;
+        }
+
+        .meter-info strong {
+            color: #333;
+            font-size: 16px;
+        }
+
+        .meter-details {
+            color: #666;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+
+        .alert {
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 6px;
+            font-weight: bold;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .alert-warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #4facfe;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 2em;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .transformer-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border-left: 5px solid #4facfe;
+        }
+
+        .breaker-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .breaker-card {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            border: 2px solid #4facfe;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background: #e0e0e0;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 5px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            border-radius: 10px;
+            transition: width 0.3s ease;
+        }
+
+        .progress-low { background: #4caf50; }
+        .progress-medium { background: #ff9800; }
+        .progress-high { background: #f44336; }
+        .progress-overload { background: #ff5722; }
+
+        .results-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .results-table th {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            padding: 15px;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .results-table td {
+            padding: 12px;
+            text-align: center;
+            border-bottom: 1px solid #eee;
+        }
+
+        .results-table tr:nth-child(even) {
+            background: #f8f9fa;
+        }
+
+        .results-table tr:hover {
+            background: #e3f2fd;
+            transition: background 0.3s;
+        }
+
+        .overloaded {
+            background-color: #ff5722 !important;
+            color: white !important;
+            font-weight: bold;
+        }
+
+        .summary-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            border-top: 4px solid #4facfe;
+        }
+
+        .summary-card h3 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+        }
+
+        .summary-card .value {
+            font-size: 2em;
+            font-weight: bold;
+            color: #4facfe;
+        }
+
+        .meter-details-cell {
+            text-align: right !important;
+            padding: 15px !important;
+            line-height: 1.8;
+        }
+
+        .meter-detail-item {
+            display: inline-block;
+            background: #f0f8ff;
+            border: 2px solid #4facfe;
+            border-radius: 8px;
+            padding: 8px 12px;
+            margin: 3px;
+            font-weight: bold;
+            color: #2c5aa0;
+            font-size: 14px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        @media (max-width: 768px) {
+            .form-group {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+            
+            .header h1 {
+                font-size: 1.8em;
+            }
+            
+            .content {
+                padding: 15px;
+            }
+            
+            .summary-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .breaker-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📋 التوزيع التسلسلي للعدادات</h1>
+            <p>توزيع حسب الأحمال التزامنية - 248A حد أقصى لكل قاطع</p>
+        </div>
+
+        <div class="content">
+            <div class="section input-section">
+                <h2>📊 إدخال بيانات العدادات</h2>
+                
+                <div class="form-group">
+                    <div>
+                        <label for="meterType">نوع العداد:</label>
+                        <select id="meterType">
+                            <option value="C1">C1 - سكني عادي (فلل، شقق، دوبلكس...)</option>
+                            <option value="C2">C2 - محلات تجارية</option>
+                            <option value="C3">C3 - شقق مفروشة / سكن عمال</option>
+                            <option value="C4">C4 - فنادق</option>
+                            <option value="C5">C5 - مولات / مراكز تسوق</option>
+                            <option value="C6">C6 - مطاعم / مقاهي</option>
+                            <option value="C7">C7 - مكاتب (حكومية/تجارية)</option>
+                            <option value="C8">C8 - مدارس / حضانات</option>
+                            <option value="C9">C9 - مساجد</option>
+                            <option value="C10">C10 - ميزانين فندق</option>
+                            <option value="C11">C11 - خدمات مشتركة في المباني</option>
+                            <option value="C12">C12 - مرافق عامة (حمامات خارجية وغيرها)</option>
+                            <option value="C13">C13 - مواقف سيارات داخلية</option>
+                            <option value="C14">C14 - مواقف خارجية</option>
+                            <option value="C15">C15 - إنارة شوارع</option>
+                            <option value="C16">C16 - حدائق ومتنزهات</option>
+                            <option value="C17">C17 - ساحات مفتوحة</option>
+                            <option value="C18">C18 - مستشفيات / مرافق طبية</option>
+                            <option value="C19">C19 - عيادات طبية</option>
+                            <option value="C20">C20 - جامعات / معاهد عليا</option>
+                            <option value="C21">C21 - صناعات خفيفة</option>
+                            <option value="C22">C22 - ورش عمل</option>
+                            <option value="C23">C23 - مخازن تبريد</option>
+                            <option value="C24">C24 - مستودعات</option>
+                            <option value="C25">C25 - قاعات مناسبات</option>
+                            <option value="C26">C26 - منشآت ترفيهية</option>
+                            <option value="C27">C27 - مزارع / منشآت زراعية</option>
+                            <option value="C28">C28 - محطات وقود</option>
+                            <option value="C29">C29 - مصانع كبرى</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="meterCount">عدد العدادات:</label>
+                        <input type="number" id="meterCount" min="1" placeholder="أدخل عدد العدادات">
+                    </div>
+                    <div>
+                        <label for="meterCapacity">سعة العداد (A):</label>
+                        <select id="meterCapacity">
+                            <option value="20">20A</option>
+                            <option value="30">30A</option>
+                            <option value="40">40A</option>
+                            <option value="50">50A</option>
+                            <option value="70">70A</option>
+                            <option value="100">100A</option>
+                            <option value="125">125A</option>
+                            <option value="150">150A</option>
+                            <option value="200">200A</option>
+                            <option value="250">250A</option>
+                            <option value="300">300A</option>
+                            <option value="400">400A</option>
+                            <option value="500">500A</option>
+                            <option value="800">800A</option>
+                        </select>
+                    </div>
+                    <div>
+                        <button class="btn btn-add" onclick="addMeter()">➕ إضافة</button>
+                    </div>
+                </div>
+
+                <div class="meters-list" id="metersList">
+                    <h3>📋 قائمة العدادات المضافة:</h3>
+                    <div id="metersContainer"></div>
+                </div>
+
+                <button class="btn btn-export" onclick="addSampleData()" style="margin: 10px;">🎯 إضافة بيانات تجريبية</button>
+                
+                <button class="btn btn-calculate" onclick="calculateSequentialDistribution()">
+                    📋 حساب التوزيع التسلسلي
+                </button>
+
+                <div class="loading" id="loading">
+                    <div class="spinner"></div>
+                    <p>جاري حساب التوزيع التسلسلي حسب الأحمال التزامنية...</p>
+                </div>
+            </div>
+
+            <div class="section results-section" id="resultsSection">
+                <h2>📈 نتائج التوزيع التسلسلي</h2>
+                
+                <div class="summary-card">
+                    <div class="summary-grid" id="summaryGrid"></div>
+                </div>
+                
+                <div id="transformersSection"></div>
+                
+                <table class="results-table" id="resultsTable">
+                    <thead>
+                        <tr>
+                            <th>المحول</th>
+                            <th>رقم القاطع</th>
+                            <th>نوع الأحمال</th>
+                            <th>عدد العدادات</th>
+                            <th>الحمل التزامني (A)</th>
+                            <th>نسبة الاستخدام</th>
+                            <th>الحالة</th>
+                            <th>تفاصيل العدادات</th>
+                        </tr>
+                    </thead>
+                    <tbody id="resultsBody"></tbody>
+                </table>
+
+                <div style="margin-top: 20px; text-align: center;">
+                    <button class="btn btn-export" onclick="exportToExcel()">📊 تصدير إلى Excel</button>
+                    <button class="btn btn-export" onclick="printResults()">🖨️ طباعة</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ثوابت النظام المحدثة للتوزيع التسلسلي
+        const MAX_BREAKER_CAPACITY = 248; // الحد الأقصى لكل قاطع
+        
+        // بيانات المحولات المحدثة
+        const TRANSFORMER_TYPES = [
+            { 
+                capacity: 500, 
+                maxCurrent: 721, 
+                safeMaxCurrent: 577,
+                breakers: 4, 
+                name: '500 KVA'
+            },
+            { 
+                capacity: 1000, 
+                maxCurrent: 1443, 
+                safeMaxCurrent: 1154,
+                breakers: 8, 
+                name: '1000 KVA'
+            },
+            { 
+                capacity: 1500, 
+                maxCurrent: 2164, 
+                safeMaxCurrent: 1731,
+                breakers: 10, 
+                name: '1500 KVA'
+            }
+        ];
+
+        const meterTypeNames = {
+            'C1': 'سكني عادي', 'C2': 'محلات تجارية', 'C3': 'شقق مفروشة', 
+            'C4': 'فنادق', 'C5': 'مولات', 'C6': 'مطاعم', 'C7': 'مكاتب', 
+            'C8': 'مدارس', 'C9': 'مساجد', 'C10': 'ميزانين فندق',
+            'C11': 'خدمات مشتركة', 'C12': 'مرافق عامة', 'C13': 'مواقف داخلية',
+            'C14': 'مواقف خارجية', 'C15': 'إنارة شوارع', 'C16': 'حدائق',
+            'C17': 'ساحات مفتوحة', 'C18': 'مستشفيات', 'C19': 'عيادات',
+            'C20': 'جامعات', 'C21': 'صناعات خفيفة', 'C22': 'ورش عمل',
+            'C23': 'مخازن تبريد', 'C24': 'مستودعات', 'C25': 'قاعات مناسبات',
+            'C26': 'منشآت ترفيهية', 'C27': 'مزارع', 'C28': 'محطات وقود',
+            'C29': 'مصانع كبرى'
+        };
+
+        const demandFactors = {
+            'C1': 0.5, 'C2': 0.6, 'C3': 0.55, 'C4': 0.7, 'C5': 0.8, 
+            'C6': 0.75, 'C7': 0.65, 'C8': 0.6, 'C9': 0.4, 'C10': 0.65,
+            'C11': 0.7, 'C12': 0.5, 'C13': 0.3, 'C14': 0.25, 'C15': 0.9,
+            'C16': 0.4, 'C17': 0.35, 'C18': 0.8, 'C19': 0.7, 'C20': 0.65,
+            'C21': 0.75, 'C22': 0.7, 'C23': 0.85, 'C24': 0.6, 'C25': 0.8,
+            'C26': 0.75, 'C27': 0.6, 'C28': 0.9, 'C29': 0.85
+        };
+
+        let meters = [];
+        let distributionResults = null;
+
+        // حساب عامل التزامن
+        function calculateCoincidenceFactor(N, meterType) {
+            if (meterType === 'C2' || meterType === 'C15' || meterType === 'C28') return 1;
+            if (N === 1) return 1;
+            const sqrtN = Math.sqrt(N);
+            return (0.67 + (0.33 / sqrtN)) / 1.25;
+        }
+
+        /**
+         * تحويل مجموعات العدادات إلى عدادات فردية
+         */
+        function convertToIndividualMeters(meterGroups) {
+            const individualMeters = [];
+            
+            meterGroups.forEach(meterGroup => {
+                const cdlPerMeter = meterGroup.totalCDL / meterGroup.count;
+                
+                for (let i = 0; i < meterGroup.count; i++) {
+                    individualMeters.push({
+                        id: `${meterGroup.id}_${i + 1}`,
+                        type: meterGroup.type,
+                        typeName: meterGroup.typeName,
+                        capacity: meterGroup.capacity,
+                        cdl: cdlPerMeter,
+                        meterNumber: i + 1,
+                        groupId: meterGroup.id,
+                        demandFactor: meterGroup.demandFactor,
+                        coincidenceFactor: meterGroup.coincidenceFactor
+                    });
+                }
+            });
+            
+            return individualMeters;
+        }
+
+        /**
+         * إنشاء قواطع المحول
+         */
+        function createBreakers(breakerCount, maxCapacity) {
+            const breakers = [];
+            
+            for (let i = 1; i <= breakerCount; i++) {
+                breakers.push({
+                    id: i,
+                    number: i,
+                    maxCapacity: maxCapacity,
+                    currentLoad: 0,
+                    meters: [],
+                    meterTypes: new Set(),
+                    utilizationPercent: 0,
+                    status: 'available',
+                    remainingCapacity: maxCapacity
+                });
+            }
+            
+            return breakers;
+        }
+
+        /**
+         * إضافة عداد لقاطع معين
+         */
+        function addMeterToBreaker(breaker, meter) {
+            breaker.meters.push(meter);
+            breaker.currentLoad += meter.cdl;
+            breaker.meterTypes.add(meter.type);
+            breaker.utilizationPercent = (breaker.currentLoad / breaker.maxCapacity) * 100;
+            breaker.remainingCapacity = breaker.maxCapacity - breaker.currentLoad;
+            
+            // تحديث حالة القاطع
+            if (breaker.currentLoad > breaker.maxCapacity) {
+                breaker.status = 'overloaded';
+            } else if (breaker.utilizationPercent >= 90) {
+                breaker.status = 'near_full';
+            } else {
+                breaker.status = 'in_use';
+            }
+        }
+
+        /**
+         * حساب الحمل الحالي للمحول
+         */
+        function calculateTransformerCurrentLoad(transformer) {
+            return transformer.breakers.reduce((sum, breaker) => sum + breaker.currentLoad, 0);
+        }
+
+function canTransformerAcceptMeter(transformer, meterCDL) {
+    // أولاً: التحقق من وجود قاطع متاح يمكنه استيعاب العداد
+    const availableBreaker = transformer.breakers.find(breaker => 
+        breaker.remainingCapacity >= meterCDL
+    );
+    
+    if (!availableBreaker) {
+        console.log(`جميع القواطع ممتلئة في المحول ${transformer.id} - لا يمكن إضافة عداد بحمل ${meterCDL.toFixed(1)}A`);
+        return false;
+    }
+    
+    // ثانياً: حساب الحمل الحالي الفعلي للمحول
+    const currentTotalLoad = calculateTransformerCurrentLoad(transformer);
+    const newTotalLoad = currentTotalLoad + meterCDL;
+    const wouldExceedSafeLimit = newTotalLoad > transformer.type.safeMaxCurrent;
+    
+    if (wouldExceedSafeLimit) {
+        console.log(`❌ إضافة العداد ستتجاوز الحد الآمن (80%) للمحول ${transformer.id}`);
+        console.log(`   الحمل الحالي: ${currentTotalLoad.toFixed(1)}A`);
+        console.log(`   حمل العداد: ${meterCDL.toFixed(1)}A`);
+        console.log(`   الحمل المتوقع: ${newTotalLoad.toFixed(1)}A`);
+        console.log(`   الحد الآمن: ${transformer.type.safeMaxCurrent.toFixed(1)}A`);
+        return false;
+    }
+    
+    console.log(`✅ يمكن إضافة العداد للمحول ${transformer.id}`);
+    console.log(`   الحمل سيصبح: ${newTotalLoad.toFixed(1)}A / ${transformer.type.safeMaxCurrent.toFixed(1)}A (${((newTotalLoad/transformer.type.safeMaxCurrent)*100).toFixed(1)}%)`);
+    return true;
+}
+
+     
+
+        
+
+        /**
+         * البحث عن أفضل قاطع لوضع العداد
+         */
+        function findBestBreakerForMeter(transformer, meter) {
+            // البحث عن قاطع يمكنه استيعاب العداد
+            const availableBreakers = transformer.breakers.filter(breaker => 
+                breaker.remainingCapacity >= meter.cdl
+            );
+            
+            if (availableBreakers.length === 0) {
+                return null; // لا يوجد قاطع متاح
+            }
+            
+            // اختيار القاطع الأقل حملاً من القواطع المتاحة
+            return availableBreakers.reduce((best, current) => 
+                current.currentLoad > best.currentLoad ? current : best
+            );
+        }
+
+        /**
+         * توزيع العدادات على محول واحد - محسن
+         */
+        function distributeMetersOnSingleTransformer(individualMeters, transformer) {
+            let totalLoad = 0;
+            let distributedMeters = [];
+            let remainingMeters = [...individualMeters];
+            
+            console.log(`بدء توزيع ${individualMeters.length} عداد على المحول ${transformer.id} (${transformer.type.name})`);
+            
+            for (let i = 0; i < individualMeters.length; i++) {
+                const meter = individualMeters[i];
+                                // التحقق من إمكانية إضافة العداد للمحول
+                if (!canTransformerAcceptMeter(transformer, meter.cdl)) {
+                    console.log(`لا يمكن إضافة العداد ${meter.id} للمحول ${transformer.id} - سيتم إنشاء محول جديد`);
+                    break; // توقف عن إضافة المزيد من العدادات لهذا المحول
+                }
+                
+                // البحث عن أفضل قاطع للعداد
+                const bestBreaker = findBestBreakerForMeter(transformer, meter);
+                
+                if (bestBreaker) {
+                    addMeterToBreaker(bestBreaker, meter);
+                    totalLoad += meter.cdl;
+                    distributedMeters.push(meter);
+                    
+                    console.log(`تم إضافة العداد ${meter.id} (${meter.cdl.toFixed(1)}A) للقاطع ${bestBreaker.number} في المحول ${transformer.id}`);
+                } else {
+                    console.log(`لا يوجد قاطع متاح للعداد ${meter.id} في المحول ${transformer.id}`);
+                    break; // توقف إذا لم نجد قاطع متاح
+                }
+            }
+            
+            // حساب نسب الاستخدام
+            transformer.totalLoad = totalLoad;
+            transformer.utilizationPercent = (totalLoad / transformer.type.safeMaxCurrent) * 100;
+            transformer.actualUtilizationPercent = (totalLoad / transformer.type.maxCurrent) * 100;
+            
+            // حساب القواطع المحملة زائد
+            transformer.overloadedBreakers = transformer.breakers.filter(b => b.utilizationPercent > 100).length;
+            
+            console.log(`المحول ${transformer.id}: تم توزيع ${distributedMeters.length} عداد، الحمل الإجمالي: ${totalLoad.toFixed(1)}A`);
+            
+            return {
+                distributedMeters: distributedMeters,
+                remainingMeters: remainingMeters.slice(distributedMeters.length),
+                totalLoad: totalLoad
+            };
+        }
+
+        /**
+         * اختيار نوع المحول المناسب حسب الحمل المتبقي
+         */
+        function selectOptimalTransformerType(remainingLoad) {
+            // اختيار أصغر محول يمكنه استيعاب الحمل المتبقي
+            for (let transformerType of TRANSFORMER_TYPES) {
+                if (remainingLoad <= transformerType.safeMaxCurrent * 0.85) { // هامش أمان 15%
+                    console.log(`تم اختيار محول ${transformerType.name} للحمل المتبقي ${remainingLoad.toFixed(1)}A`);
+                    return transformerType;
+                }
+            }
+            
+            // إذا كان الحمل كبيراً جداً، استخدم أكبر محول
+            console.log(`الحمل المتبقي ${remainingLoad.toFixed(1)}A كبير جداً، سيتم استخدام أكبر محول متاح`);
+            return TRANSFORMER_TYPES[TRANSFORMER_TYPES.length - 1];
+        }
+
+        /**
+         * الوظيفة الرئيسية للتوزيع التسلسلي - محسنة بالكامل
+         */
+        function performSequentialDistribution() {
+            console.log('=== بدء التوزيع التسلسلي المحسن ===');
+            
+            // تحويل مجموعات العدادات إلى عدادات فردية
+            const individualMeters = convertToIndividualMeters(meters);
+            
+            // ترتيب العدادات حسب الحمل (الأكبر أولاً)
+            individualMeters.sort((a, b) => b.cdl - a.cdl);
+            
+            console.log(`إجمالي العدادات الفردية: ${individualMeters.length}`);
+            console.log(`إجمالي الحمل: ${individualMeters.reduce((sum, m) => sum + m.cdl, 0).toFixed(1)}A`);
+            
+            const transformers = [];
+            let remainingMeters = [...individualMeters];
+            let transformerIndex = 1;
+            
+            while (remainingMeters.length > 0) {
+                console.log(`\n--- إنشاء المحول ${transformerIndex} ---`);
+                console.log(`العدادات المتبقية: ${remainingMeters.length}`);
+                
+                // حساب الحمل المتبقي
+                const remainingLoad = remainingMeters.reduce((sum, meter) => sum + meter.cdl, 0);
+                console.log(`الحمل المتبقي: ${remainingLoad.toFixed(1)}A`);
+                
+                // اختيار نوع المحول المناسب
+                const transformerType = selectOptimalTransformerType(remainingLoad);
+                
+                // إنشاء محول جديد
+                const transformer = {
+                    id: transformerIndex,
+                    type: transformerType,
+                    totalLoad: 0,
+                    utilizationPercent: 0,
+                    actualUtilizationPercent: 0,
+                    breakers: createBreakers(transformerType.breakers, MAX_BREAKER_CAPACITY),
+                    overloadedBreakers: 0
+                };
+                
+                // توزيع العدادات على هذا المحول
+                const distributionResult = distributeMetersOnSingleTransformer(remainingMeters, transformer);
+                
+                // إضافة المحول للقائمة
+                transformers.push(transformer);
+                
+                // تحديث العدادات المتبقية
+                remainingMeters = distributionResult.remainingMeters;
+                
+                console.log(`المحول ${transformerIndex} - الحمل النهائي: ${transformer.totalLoad.toFixed(1)}A / ${transformer.type.safeMaxCurrent}A`);
+                console.log(`نسبة الاستخدام الآمنة: ${transformer.utilizationPercent.toFixed(1)}%`);
+                
+                transformerIndex++;
+                
+                // حماية من الحلقة اللانهائية
+                if (transformerIndex > 50) {
+                    console.error('تم الوصول للحد الأقصى من المحولات - توقف لتجنب الحلقة اللانهائية');
+                    
+                    // في حالة الطوارئ، أضف العدادات المتبقية للمحول الأخير بالقوة
+                    if (remainingMeters.length > 0) {
+                        const lastTransformer = transformers[transformers.length - 1];
+                        console.warn(`إضافة ${remainingMeters.length} عداد متبقي بالقوة للمحول الأخير`);
+                        
+                        remainingMeters.forEach(meter => {
+                            const leastLoadedBreaker = lastTransformer.breakers.reduce((min, breaker) => 
+                                breaker.currentLoad < min.currentLoad ? breaker : min
+                            );
+                            addMeterToBreaker(leastLoadedBreaker, meter);
+                            lastTransformer.totalLoad += meter.cdl;
+                        });
+                        
+                        // إعادة حساب نسب الاستخدام
+                        lastTransformer.utilizationPercent = (lastTransformer.totalLoad / lastTransformer.type.safeMaxCurrent) * 100;
+                        lastTransformer.actualUtilizationPercent = (lastTransformer.totalLoad / lastTransformer.type.maxCurrent) * 100;
+                        lastTransformer.overloadedBreakers = lastTransformer.breakers.filter(b => b.utilizationPercent > 100).length;
+                        
+                        remainingMeters = [];
+                    }
+                    break;
+                }
+            }
+            
+            console.log(`\n=== انتهاء التوزيع ===`);
+            console.log(`عدد المحولات المستخدمة: ${transformers.length}`);
+            
+            const totalLoad = transformers.reduce((sum, t) => sum + t.totalLoad, 0);
+            const summary = calculateSequentialSummary(transformers, totalLoad);
+            
+            return {
+                totalLoad: totalLoad,
+                transformers: transformers,
+                summary: summary
+            };
+        }
+
+        function addMeter() {
+            const type = document.getElementById('meterType').value;
+            const count = parseInt(document.getElementById('meterCount').value);
+            const capacity = parseInt(document.getElementById('meterCapacity').value);
+
+            if (!count || count <= 0) {
+                showError('يرجى إدخال عدد العدادات');
+                return;
+            }
+
+            const demandFactor = demandFactors[type];
+            const coincidenceFactor = calculateCoincidenceFactor(count, type);
+            const cdlPerMeter = capacity * demandFactor;
+            const totalCDL = count * cdlPerMeter * coincidenceFactor;
+
+            const meterGroup = {
+                id: Date.now(),
+                type: type,
+                typeName: meterTypeNames[type],
+                count: count,
+                capacity: capacity,
+                demandFactor: demandFactor,
+                coincidenceFactor: coincidenceFactor,
+                cdlPerMeter: cdlPerMeter,
+                totalCDL: totalCDL
+            };
+
+            meters.push(meterGroup);
+            updateMetersList();
+            clearInputs();
+            showSuccess('تم إضافة العداد بنجاح');
+        }
+
+        function updateMetersList() {
+            const container = document.getElementById('metersContainer');
+            
+            if (meters.length === 0) {
+                container.innerHTML = '<p style="color: #666; text-align: center; padding: 20px;">لم يتم إضافة أي عدادات بعد</p>';
+                return;
+            }
+
+            container.innerHTML = meters.map(meter => `
+                <div class="meter-item">
+                    <div class="meter-info">
+                        <strong>${meter.count} × ${meter.typeName} (${meter.capacity}A)</strong>
+                        <div class="meter-details">
+                            معامل الطلب: ${meter.demandFactor.toFixed(3)} | 
+                            معامل التزامن: ${meter.coincidenceFactor.toFixed(3)} | 
+                            الحمل التزامني: ${meter.totalCDL.toFixed(1)}A
+                        </div>
+                    </div>
+                    <button class="btn btn-remove" onclick="removeMeter(${meter.id})">🗑️ حذف</button>
+                </div>
+            `).join('');
+        }
+
+        function removeMeter(id) {
+            meters = meters.filter(meter => meter.id !== id);
+            updateMetersList();
+            showSuccess('تم حذف العداد');
+        }
+
+        function clearInputs() {
+            document.getElementById('meterCount').value = '';
+        }
+
+        function addSampleData() {
+            if (confirm('هل تريد إضافة بيانات تجريبية؟')) {
+                meters = [];
+                
+                const sampleData = [
+                    { type: 'C1', count: 50, capacity: 30 },
+                    { type: 'C2', count: 40, capacity: 70 },
+                    { type: 'C1', count: 45, capacity: 50 },
+                    { type: 'C6', count: 25, capacity: 100 },
+                    { type: 'C3', count: 35, capacity: 40 },
+                    { type: 'C7', count: 30, capacity: 50 },
+                    { type: 'C15', count: 20, capacity: 30 },
+                    { type: 'C4', count: 22, capacity: 125 },
+                    { type: 'C1', count: 60, capacity: 40 },
+                    { type: 'C2', count: 35, capacity: 100 }
+                ];
+
+                sampleData.forEach(data => {
+                    const demandFactor = demandFactors[data.type];
+                    const coincidenceFactor = calculateCoincidenceFactor(data.count, data.type);
+                    const cdlPerMeter = data.capacity * demandFactor;
+                    const totalCDL = data.count * cdlPerMeter * coincidenceFactor;
+
+                    meters.push({
+                        id: Date.now() + Math.random(),
+                        type: data.type,
+                        typeName: meterTypeNames[data.type],
+                        count: data.count,
+                        capacity: data.capacity,
+                        demandFactor: demandFactor,
+                        coincidenceFactor: coincidenceFactor,
+                        cdlPerMeter: cdlPerMeter,
+                        totalCDL: totalCDL
+                    });
+                });
+
+                updateMetersList();
+                showSuccess('تم إضافة البيانات التجريبية (حمل عالي لاختبار إنشاء محولات متعددة)');
+            }
+        }
+
+        // الوظيفة الرئيسية للتوزيع التسلسلي
+        function calculateSequentialDistribution() {
+            if (meters.length === 0) {
+                showError('يرجى إضافة العدادات أولاً');
+                return;
+            }
+
+            document.getElementById('loading').style.display = 'block';
+            
+            setTimeout(() => {
+                try {
+                    const results = performSequentialDistribution();
+                    displayResults(results);
+                    document.getElementById('loading').style.display = 'none';
+                    document.getElementById('resultsSection').style.display = 'block';
+                    
+                    // عرض رسالة تأكيد مع تفاصيل
+                    const overloadedTransformers = results.transformers.filter(t => t.utilizationPercent > 100).length;
+                    const warningMessage = overloadedTransformers > 0 
+                        ? ` تحذير: ${overloadedTransformers} محول محمل زائد!` 
+                        : '';
+                    
+                    showSuccess(`تم حساب التوزيع التسلسلي! عدد المحولات: ${results.transformers.length}${warningMessage}`);
+                } catch (error) {
+                    document.getElementById('loading').style.display = 'none';
+                    console.error('خطأ في الحسابات:', error);
+                    showError('حدث خطأ في الحسابات: ' + error.message);
+                }
+            }, 1500);
+        }
+
+        function calculateSequentialSummary(transformers, totalLoad) {
+            let totalBreakers = 0;
+            let usedBreakers = 0;
+            let totalMeters = 0;
+            let overloadedBreakers = 0;
+            let overloadedTransformers = 0;
+            let maxBreakerUtilization = 0;
+            let minBreakerUtilization = 100;
+            let totalBreakerUtilization = 0;
+            let utilizationCount = 0;
+
+            transformers.forEach(transformer => {
+                totalBreakers += transformer.type.breakers;
+                
+                transformer.breakers.forEach(breaker => {
+                    if (breaker.meters.length > 0) {
+                        usedBreakers++;
+                        totalMeters += breaker.meters.length;
+                        
+                        if (breaker.utilizationPercent > 100) {
+                            overloadedBreakers++;
+                        }
+                        
+                        maxBreakerUtilization = Math.max(maxBreakerUtilization, breaker.utilizationPercent);
+                        if (breaker.utilizationPercent > 0) {
+                            minBreakerUtilization = Math.min(minBreakerUtilization, breaker.utilizationPercent);
+                        }
+                        totalBreakerUtilization += breaker.utilizationPercent;
+                        utilizationCount++;
+                    }
+                });
+
+                if (transformer.utilizationPercent > 100) {
+                    overloadedTransformers++;
+                }
+            });
+
+            const avgBreakerUtilization = utilizationCount > 0 ? totalBreakerUtilization / utilizationCount : 0;
+            const efficiency = totalBreakers > 0 ? (usedBreakers / totalBreakers) * 100 : 0;
+
+            return {
+                totalTransformers: transformers.length,
+                totalBreakers,
+                usedBreakers,
+                totalMeters,
+                totalLoad: totalLoad.toFixed(1),
+                overloadedBreakers,
+                overloadedTransformers,
+                maxBreakerUtilization: maxBreakerUtilization.toFixed(1),
+                minBreakerUtilization: minBreakerUtilization === 100 ? '0.0' : minBreakerUtilization.toFixed(1),
+                avgBreakerUtilization: avgBreakerUtilization.toFixed(1),
+                efficiency: efficiency.toFixed(1)
+            };
+        }
+
+        function displayResults(results) {
+            distributionResults = results;
+            
+            displaySummary(results.summary);
+            displayTransformers(results.transformers);
+            displayResultsTable(results.transformers);
+        }
+
+        function displaySummary(summary) {
+            const summaryGrid = document.getElementById('summaryGrid');
+            
+            const totalLoadKVA = (summary.totalLoad * 0.4 * 1.73).toFixed(1);
+            
+            summaryGrid.innerHTML = `
+                <div class="stat-card">
+                    <div class="stat-number">${summary.totalTransformers}</div>
+                    <div>عدد المحولات</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">${summary.usedBreakers}</div>
+                    <div>القواطع المستخدمة</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">${summary.totalMeters}</div>
+                    <div>إجمالي العدادات</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">${summary.totalLoad}</div>
+                    <div>إجمالي الحمل (أمبير)</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">${totalLoadKVA}</div>
+                    <div>إجمالي الحمل (KVA)</div>
+                </div>
+                <div class="stat-card ${summary.overloadedTransformers > 0 ? 'overloaded' : ''}">
+                    <div class="stat-number">${summary.overloadedTransformers}</div>
+                    <div>محولات محملة زائد</div>
+                </div>
+                <div class="stat-card ${summary.overloadedBreakers > 0 ? 'overloaded' : ''}">
+                    <div class="stat-number">${summary.overloadedBreakers}</div>
+                    <div>قواطع محملة زائد</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">${summary.efficiency}%</div>
+                    <div>كفاءة الاستخدام</div>
+                </div>
+            `;
+        }
+
+        function displayTransformers(transformers) {
+            const transformersSection = document.getElementById('transformersSection');
+            
+            transformersSection.innerHTML = transformers.map((transformer, index) => {
+                const usedBreakers = transformer.breakers.filter(b => b.meters.length > 0);
+                const transformerStatus = getTransformerStatus(transformer.utilizationPercent);
+                
+                return `
+                    <div class="transformer-section">
+                        <h3>🔌 المحول ${index + 1}: ${transformer.type.name} ${transformerStatus}</h3>
+                        <div style="margin-bottom: 15px;">
+                            <strong>الحمل الإجمالي:</strong> ${transformer.totalLoad.toFixed(1)}A / ${transformer.type.maxCurrent}A
+                            <br>
+                            <strong>نسبة الاستخدام الآمنة:</strong> ${transformer.utilizationPercent.toFixed(1)}% (من ${transformer.type.safeMaxCurrent}A)
+                            <br>
+                            <strong>نسبة الاستخدام الفعلية:</strong> ${transformer.actualUtilizationPercent.toFixed(1)}% (من ${transformer.type.maxCurrent}A)
+                            <br>
+                            <strong>القواطع المستخدمة:</strong> ${usedBreakers.length} من ${transformer.type.breakers}
+                            <br>
+                            <strong>القواطع المحملة زائد:</strong> ${transformer.overloadedBreakers}
+                        </div>
+                        ${transformer.utilizationPercent > 100 ? `
+                            <div class="alert alert-warning">
+                                ⚠️ تحذير: هذا المحول محمل زائد عن طاقته الآمنة!
+                            </div>
+                        ` : ''}
+                        <div class="breaker-grid">
+                            ${usedBreakers.map(breaker => `
+                                <div class="breaker-card">
+                                    <h4>⚡ القاطع ${breaker.number} ${getBreakerStatus(breaker.utilizationPercent)}</h4>
+                                    <div><strong>الحمل:</strong> ${breaker.currentLoad.toFixed(1)}A / ${MAX_BREAKER_CAPACITY}A</div>
+                                    <div class="progress-bar">
+                                        <div class="progress-fill ${getProgressClass(breaker.utilizationPercent)}" 
+                                             style="width: ${Math.min(breaker.utilizationPercent, 100)}%"></div>
+                                    </div>
+                                    <div><strong>نسبة الاستخدام:</strong> ${breaker.utilizationPercent.toFixed(1)}%</div>
+                                    <div><strong>عدد العدادات:</strong> ${breaker.meters.length}</div>
+                                    <div><strong>أنواع الأحمال:</strong> ${Array.from(breaker.meterTypes).map(type => meterTypeNames[type]).join(', ')}</div>
+                                    <div><strong>الحالة:</strong> ${getBreakerStatusText(breaker.status)}</div>
+                                    <div style="margin-top: 10px;">
+                                        <strong>تفاصيل العدادات:</strong><br>
+                                        ${generateMeterDetailsHTML(breaker)}
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function getTransformerStatus(utilization) {
+            if (utilization <= 70) {
+                return '<span style="background: #4caf50; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px;">ممتاز</span>';
+            } else if (utilization <= 85) {
+                return '<span style="background: #8bc34a; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px;">جيد</span>';
+            } else if (utilization <= 100) {
+                return '<span style="background: #ff9800; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px;">مقبول</span>';
+            } else {
+                return '<span style="background: #f44336; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px;">محمل زائد</span>';
+            }
+        }
+
+        function getBreakerStatus(utilization) {
+            if (utilization <= 70) {
+                return '<span style="background: #4caf50; color: white; padding: 2px 6px; border-radius: 4px; font-size: 11px;">جيد</span>';
+            } else if (utilization <= 90) {
+                return '<span style="background: #ff9800; color: white; padding: 2px 6px; border-radius: 4px; font-size: 11px;">مقبول</span>';
+            } else if (utilization <= 100) {
+                return '<span style="background: #f44336; color: white; padding: 2px 6px; border-radius: 4px; font-size: 11px;">عالي</span>';
+            } else {
+                return '<span style="background: #ff5722; color: white; padding: 2px 6px; border-radius: 4px; font-size: 11px;">محمل زائد</span>';
+            }
+        }
+
+        function getBreakerStatusText(status) {
+            const statusMap = {
+                'available': 'متاح',
+                'in_use': 'قيد الاستخدام',
+                'near_full': 'شبه ممتلئ',
+                'overloaded': 'محمل زائد'
+            };
+            return statusMap[status] || status;
+        }
+
+        function getProgressClass(utilization) {
+            if (utilization <= 70) return 'progress-low';
+            if (utilization <= 90) return 'progress-medium';
+            if (utilization <= 100) return 'progress-high';
+            return 'progress-overload';
+        }
+
+        function displayResultsTable(transformers) {
+            const resultsBody = document.getElementById('resultsBody');
+            
+            let tableRows = '';
+            
+            transformers.forEach((transformer, transformerIndex) => {
+                const usedBreakers = transformer.breakers.filter(b => b.meters.length > 0);
+                usedBreakers.forEach(breaker => {
+                    const meterTypes = Array.from(breaker.meterTypes).map(type => meterTypeNames[type]).join(', ');
+                    const status = getBreakerStatusText(breaker.status);
+                    const rowClass = breaker.utilizationPercent > 100 ? 'overloaded' : '';
+                    
+                    tableRows += `
+                        <tr class="${rowClass}">
+                            <td>المحول ${transformerIndex + 1}<br><small>${transformer.type.name}</small></td>
+                            <td>قاطع ${breaker.number}</td>
+                            <td>${meterTypes}</td>
+                            <td>${breaker.meters.length}</td>
+                            <td>${breaker.currentLoad.toFixed(1)}A</td>
+                            <td>${breaker.utilizationPercent.toFixed(1)}%</td>
+                            <td>${status}</td>
+                            <td class="meter-details-cell">${generateMeterDetailsHTML(breaker)}</td>
+                        </tr>
+                    `;
+                });
+            });
+            
+            resultsBody.innerHTML = tableRows;
+        }
+
+        function generateMeterDetailsHTML(breaker) {
+            const meterGroups = {};
+            
+            breaker.meters.forEach(meter => {
+                const key = `${meter.type}_${meter.capacity}`;
+                if (!meterGroups[key]) {
+                    meterGroups[key] = {
+                        type: meter.type,
+                        typeName: meter.typeName,
+                        capacity: meter.capacity,
+                        count: 0,
+                        totalCDL: 0
+                    };
+                }
+                meterGroups[key].count++;
+                meterGroups[key].totalCDL += meter.cdl;
+            });
+
+            return Object.values(meterGroups).map(group => {
+                return `
+                    <div class="meter-detail-item">
+                        <span class="count">${group.count}</span>
+                        <span class="multiply">×</span>
+                        <span class="capacity">${group.capacity}A</span>
+                        <br>
+                        <small>${group.typeName}</small>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function exportToExcel() {
+            if (!distributionResults) {
+                showError('لا توجد نتائج للتصدير');
+                return;
+            }
+            
+            let csvContent = "المحول,القاطع,نوع الأحمال,عدد العدادات,الحمل التزامني (A),نسبة الاستخدام (%),الحالة,تفاصيل العدادات\n";
+            
+            distributionResults.transformers.forEach((transformer, transformerIndex) => {
+                const usedBreakers = transformer.breakers.filter(b => b.meters.length > 0);
+                usedBreakers.forEach(breaker => {
+                    const meterTypes = Array.from(breaker.meterTypes).map(type => meterTypeNames[type]).join(' + ');
+                    const status = getBreakerStatusText(breaker.status);
+                    const meterDetails = breaker.meters.map(meter => 
+                        `${meter.typeName} (${meter.capacity}A)`
+                    ).join(' | ');
+                    
+                    csvContent += `"المحول ${transformerIndex + 1} - ${transformer.type.name}",قاطع ${breaker.number},"${meterTypes}",${breaker.meters.length},${breaker.currentLoad.toFixed(1)},${breaker.utilizationPercent.toFixed(1)},"${status}","${meterDetails}"\n`;
+                });
+            });
+            
+            // إضافة ملخص
+            csvContent += `\nملخص التوزيع التسلسلي:\n`;
+            csvContent += `عدد المحولات,${distributionResults.summary.totalTransformers}\n`;
+            csvContent += `القواطع المستخدمة,${distributionResults.summary.usedBreakers}\n`;            csvContent += `إجمالي العدادات,${distributionResults.summary.totalMeters}\n`;
+            csvContent += `محولات محملة زائد,${distributionResults.summary.overloadedTransformers}\n`;
+            csvContent += `قواطع محملة زائد,${distributionResults.summary.overloadedBreakers}\n`;
+            csvContent += `كفاءة الاستخدام,${distributionResults.summary.efficiency}%\n`;
+            csvContent += `متوسط استخدام القواطع,${distributionResults.summary.avgBreakerUtilization}%\n`;
+            csvContent += `أقصى استخدام للقواطع,${distributionResults.summary.maxBreakerUtilization}%\n`;
+            csvContent += `أدنى استخدام للقواطع,${distributionResults.summary.minBreakerUtilization}%\n`;
+            
+            // إضافة تفاصيل المحولات
+            csvContent += `\nتفاصيل المحولات:\n`;
+            csvContent += `رقم المحول,نوع المحول,الحمل الإجمالي (A),نسبة الاستخدام الآمنة (%),نسبة الاستخدام الفعلية (%),القواطع المستخدمة,القواطع المحملة زائد\n`;
+            
+            distributionResults.transformers.forEach((transformer, index) => {
+                const usedBreakers = transformer.breakers.filter(b => b.meters.length > 0).length;
+                csvContent += `${index + 1},${transformer.type.name},${transformer.totalLoad.toFixed(1)},${transformer.utilizationPercent.toFixed(1)},${transformer.actualUtilizationPercent.toFixed(1)},${usedBreakers},${transformer.overloadedBreakers}\n`;
+            });
+            
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', `التوزيع_التسلسلي_المحسن_${new Date().toISOString().split('T')[0]}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            showSuccess('تم تصدير النتائج بنجاح');
+        }
+
+        function printResults() {
+            if (!distributionResults) {
+                showError('لا توجد نتائج للطباعة');
+                return;
+            }
+            
+            const printWindow = window.open('', '_blank');
+            const printContent = `
+                <!DOCTYPE html>
+                <html dir="rtl">
+                <head>
+                    <meta charset="UTF-8">
+                    <title>تقرير التوزيع التسلسلي المحسن للعدادات</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; margin: 20px; }
+                        h1, h2, h3 { color: #333; }
+                        table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+                        th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
+                        th { background-color: #4facfe; color: white; }
+                        .overloaded { background-color: #ffebee; }
+                        .summary { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin: 20px 0; }
+                        .stat-card { border: 2px solid #4facfe; padding: 15px; text-align: center; border-radius: 8px; }
+                        .transformer-summary { background: #f8f9fa; padding: 15px; margin: 10px 0; border-radius: 8px; }
+                        .warning { background-color: #fff3cd; border: 1px solid #ffc107; color: #856404; padding: 10px; border-radius: 4px; margin: 10px 0; }
+                        .statistics-section { background: #f0f8ff; padding: 15px; margin: 15px 0; border-radius: 8px; border-left: 4px solid #4facfe; }
+                        .success { background-color: #d4edda; border: 1px solid #c3e6cb; color: #155724; padding: 10px; border-radius: 4px; margin: 10px 0; }
+                    </style>
+                </head>
+                <body>
+                    <h1>📋 تقرير التوزيع التسلسلي المحسن للعدادات</h1>
+                    <p><strong>تاريخ التقرير:</strong> ${new Date().toLocaleDateString('ar-SA')}</p>
+                    <p><strong>وقت التقرير:</strong> ${new Date().toLocaleTimeString('ar-SA')}</p>
+                    <p><strong>طريقة التوزيع:</strong> تسلسلي محسن حسب الأحمال التزامنية - 248A حد أقصى لكل قاطع</p>
+                    
+                    <h2>📊 ملخص النتائج</h2>
+                    <div class="summary">
+                        <div class="stat-card">
+                            <h3>${distributionResults.summary.totalTransformers}</h3>
+                            <p>عدد المحولات</p>
+                        </div>
+                        <div class="stat-card">
+                            <h3>${distributionResults.summary.usedBreakers}</h3>
+                            <p>القواطع المستخدمة</p>
+                        </div>
+                        <div class="stat-card">
+                            <h3>${distributionResults.summary.totalMeters}</h3>
+                            <p>إجمالي العدادات</p>
+                        </div>
+                        <div class="stat-card">
+                            <h3>${distributionResults.summary.efficiency}%</h3>
+                            <p>كفاءة الاستخدام</p>
+                        </div>
+                    </div>
+                    
+                    <div class="statistics-section">
+                        <h3>📈 إحصائيات التوزيع</h3>
+                        <p><strong>إجمالي الحمل:</strong> ${distributionResults.summary.totalLoad}A</p>
+                        <p><strong>متوسط استخدام القواطع:</strong> ${distributionResults.summary.avgBreakerUtilization}%</p>
+                        <p><strong>أقصى استخدام للقواطع:</strong> ${distributionResults.summary.maxBreakerUtilization}%</p>
+                        <p><strong>أدنى استخدام للقواطع:</strong> ${distributionResults.summary.minBreakerUtilization}%</p>
+                        <p><strong>المحولات المحملة زائد:</strong> ${distributionResults.summary.overloadedTransformers}</p>
+                        <p><strong>القواطع المحملة زائد:</strong> ${distributionResults.summary.overloadedBreakers}</p>
+                    </div>
+                    
+                    ${distributionResults.summary.overloadedTransformers === 0 && distributionResults.summary.overloadedBreakers === 0 ? 
+                        '<div class="success">✅ جميع المحولات والقواطع تعمل ضمن الحدود الآمنة</div>' : 
+                        '<div class="warning">⚠️ يوجد محولات أو قواطع محملة زائد - يرجى مراجعة التوزيع</div>'
+                    }
+                    
+                    <h2>🔌 تفاصيل المحولات</h2>
+                    ${distributionResults.transformers.map((transformer, index) => {
+                        const isOverloaded = transformer.utilizationPercent > 100;
+                        const usedBreakers = transformer.breakers.filter(b => b.meters.length > 0).length;
+                        const statusClass = isOverloaded ? 'warning' : 'success';
+                        return `
+                            <div class="transformer-summary">
+                                <h3>المحول ${index + 1}: ${transformer.type.name}</h3>
+                                <div class="${statusClass}">
+                                    <strong>الحمل:</strong> ${transformer.totalLoad.toFixed(1)}A / ${transformer.type.maxCurrent}A<br>
+                                    <strong>نسبة الاستخدام الآمنة:</strong> ${transformer.utilizationPercent.toFixed(1)}% (من ${transformer.type.safeMaxCurrent}A)<br>
+                                    <strong>نسبة الاستخدام الفعلية:</strong> ${transformer.actualUtilizationPercent.toFixed(1)}% (من ${transformer.type.maxCurrent}A)<br>
+                                    <strong>القواطع المستخدمة:</strong> ${usedBreakers} من ${transformer.type.breakers}<br>
+                                    <strong>القواطع المحملة زائد:</strong> ${transformer.overloadedBreakers}<br>
+                                    <strong>الحالة:</strong> ${isOverloaded ? '⚠️ محمل زائد' : '✅ ضمن الحد الآمن'}
+                                </div>
+                                
+                                <h4>تفاصيل القواطع:</h4>
+                                ${transformer.breakers.filter(b => b.meters.length > 0).map(breaker => `
+                                    <div style="margin: 10px 0; padding: 10px; background: ${breaker.utilizationPercent > 100 ? '#ffebee' : '#f8f9fa'}; border-radius: 4px;">
+                                        <strong>القاطع ${breaker.number}:</strong> ${breaker.currentLoad.toFixed(1)}A (${breaker.utilizationPercent.toFixed(1)}%) - ${breaker.meters.length} عداد<br>
+                                        <small>الأحمال: ${Array.from(breaker.meterTypes).map(type => meterTypeNames[type]).join(', ')}</small>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        `;
+                    }).join('')}
+                    
+                    <h2>📋 جدول التوزيع التفصيلي</h2>
+                    ${document.getElementById('resultsTable').outerHTML}
+                    
+                    <div style="margin-top: 30px; padding: 15px; background: #e3f2fd; border-radius: 8px;">
+                        <h3>ملاحظات مهمة:</h3>
+                        <ul>
+                            <li><strong>خوارزمية التوزيع:</strong> تسلسلي محسن مع إنشاء محولات تلقائياً</li>
+                            <li><strong>ترتيب العدادات:</strong> حسب الحمل (الأكبر أولاً) لضمان توزيع أمثل</li>
+                            <li><strong>الحد الأقصى للقاطع:</strong> 248 أمبير</li>
+                            <li><strong>الحد الآمن للمحول:</strong> 80% من السعة القصوى</li>
+                            <li><strong>إنشاء محولات جديدة:</strong> تلقائياً عند امتلاء المحول الحالي</li>
+                            <li><strong>اختيار نوع المحول:</strong> حسب الحمل المتبقي لضمان الكفاءة</li>
+                        </ul>
+                    </div>
+                    
+                    <div style="margin-top: 20px; padding: 15px; background: #f1f8e9; border-radius: 8px;">
+                        <h3>مزايا الخوارزمية المحسنة:</h3>
+                        <ul>
+                            <li>✅ <strong>توزيع ذكي:</strong> ترتيب العدادات حسب الحمل</li>
+                            <li>✅ <strong>إنشاء تلقائي:</strong> للمحولات عند الحاجة</li>
+                            <li>✅ <strong>اختيار أمثل:</strong> لنوع المحول حسب الحمل</li>
+                            <li>✅ <strong>حماية من التحميل الزائد:</strong> احترام الحدود الآمنة</li>
+                            <li>✅ <strong>إحصائيات شاملة:</strong> لتقييم الأداء</li>
+                            <li>✅ <strong>تتبع دقيق:</strong> لحالة كل قاطع ومحول</li>
+                        </ul>
+                    </div>
+                    
+                    <div style="margin-top: 20px; padding: 15px; background: #fff3e0; border-radius: 8px;">
+                        <h3>معايير الأمان المطبقة:</h3>
+                        <ul>
+                            <li><strong>قاطع 248A:</strong> حد أقصى لكل قاطع</li>
+                            <li><strong>محول 500KVA:</strong> حد آمن 577A (80% من 721A)</li>
+                            <li><strong>محول 1000KVA:</strong> حد آمن 1154A (80% من 1443A)</li>
+                            <li><strong>محول 1500KVA:</strong> حد آمن 1731A (80% من 2164A)</li>
+                        </ul>
+                    </div>
+                    
+                    <div style="margin-top: 30px; text-align: center; color: #666; border-top: 2px solid #4facfe; padding-top: 15px;">
+                        <p><strong>تم إنشاء هذا التقرير بواسطة نظام التوزيع التسلسلي المحسن</strong></p>
+                        <p>جميع الحسابات تمت وفقاً للمعايير الهندسية المعتمدة</p>
+                    </div>
+                </body>
+                </html>
+            `;
+            
+            printWindow.document.write(printContent);
+            printWindow.document.close();
+            printWindow.print();
+            
+            showSuccess('تم إعداد التقرير للطباعة');
+        }
+
+        function showError(message) {
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'alert alert-error';
+            errorDiv.innerHTML = `⚠️ ${message}`;
+            errorDiv.style.position = 'fixed';
+            errorDiv.style.top = '20px';
+            errorDiv.style.right = '20px';
+            errorDiv.style.zIndex = '9999';
+            errorDiv.style.maxWidth = '400px';
+            errorDiv.style.borderRadius = '8px';
+            errorDiv.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
+            
+            document.body.appendChild(errorDiv);
+            
+            setTimeout(() => {
+                if (document.body.contains(errorDiv)) {
+                    document.body.removeChild(errorDiv);
+                }
+            }, 5000);
+        }
+
+        function showSuccess(message) {
+            const successDiv = document.createElement('div');
+            successDiv.className = 'alert alert-success';
+            successDiv.innerHTML = `✅ ${message}`;
+            successDiv.style.position = 'fixed';
+            successDiv.style.top = '20px';
+            successDiv.style.right = '20px';
+            successDiv.style.zIndex = '9999';
+            successDiv.style.maxWidth = '400px';
+            successDiv.style.borderRadius = '8px';
+            successDiv.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
+            
+            document.body.appendChild(successDiv);
+            
+            setTimeout(() => {
+                if (document.body.contains(successDiv)) {
+                    document.body.removeChild(successDiv);
+                }
+            }, 3000);
+        }
+
+        // تهيئة الصفحة
+        document.addEventListener('DOMContentLoaded', function() {
+            updateMetersList();
+            
+            document.getElementById('meterCount').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    addMeter();
+                }
+            });
+            
+            // إضافة معلومات إضافية في وحدة التحكم
+            console.log('🔧 نظام التوزيع التسلسلي المحسن جاهز');
+            console.log('📋 المزايا الجديدة:');
+            console.log('   ✅ إنشاء محولات تلقائياً عند الحاجة');
+            console.log('   ✅ اختيار نوع المحول الأمثل حسب الحمل');
+            console.log('   ✅ احترام الحدود الآمنة للمحولات');
+            console.log('   ✅ ترتيب العدادات حسب الحمل');
+            console.log('   ✅ حماية من الحلقات اللانهائية');
+            console.log('   ✅ إحصائيات شاملة ومفصلة');
+        });
+    </script>
+</body>
+</html>
+
+            
